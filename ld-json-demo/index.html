@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>application/ld+json 完全解説</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+            padding-left: 15px;
+        }
+
+        h3 {
+            font-size: 1.3em;
+            color: #764ba2;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .feature-card h4 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .example-output {
+            background: #fffacd;
+            border: 2px solid #ffd700;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .example-output h4 {
+            color: #b8860b;
+            margin-bottom: 10px;
+        }
+
+        .key {
+            color: #9cdcfe;
+        }
+
+        .string {
+            color: #ce9178;
+        }
+
+        .number {
+            color: #b5cea8;
+        }
+
+        .boolean {
+            color: #569cd6;
+        }
+
+        ul {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .visual-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .visual-demo {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-card {
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            background: #f8f9ff;
+        }
+
+        .stars {
+            color: #ffd700;
+            font-size: 1.5em;
+        }
+
+        .price {
+            font-size: 2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 application/ld+json 完全解説</h1>
+            <p class="subtitle">構造化データで検索エンジンと会話する技術</p>
+        </header>
+
+        <!-- What is ld+json -->
+        <div class="section">
+            <h2>📚 application/ld+json とは？</h2>
+            <div class="info-box">
+                <p><strong>JSON-LD (JSON for Linking Data)</strong> は、Webページの内容を機械可読な形式で記述する標準フォーマットです。</p>
+            </div>
+
+            <h3>🎯 なぜ必要？</h3>
+            <p>HTML は人間が読むため、検索エンジンは「これは商品名なのか？価格なのか？」を完全には理解できません。JSON-LD を使うと、明示的に情報を伝えられます。</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🌟 リッチスニペット</h4>
+                    <p>検索結果に星評価や価格を表示</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 ナレッジグラフ</h4>
+                    <p>検索結果右側の情報カード</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎤 音声検索</h4>
+                    <p>AlexaやGoogleアシスタント対応</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔗 リンクドデータ</h4>
+                    <p>Web上のデータを繋げる</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Basic Structure -->
+        <div class="section">
+            <h2>🏗️ 基本構造</h2>
+            <p>HTMLの<code>&lt;script&gt;</code>タグ内に記述します：</p>
+
+            <div class="code-block">
+<span class="key">&lt;script</span> <span class="string">type="application/ld+json"</span><span class="key">&gt;</span>
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Product"</span>,
+  <span class="key">"name"</span>: <span class="string">"商品名"</span>
+}
+<span class="key">&lt;/script&gt;</span>
+            </div>
+
+            <div class="info-box">
+                <h4>重要なキー：</h4>
+                <ul>
+                    <li><span class="highlight">@context</span> - 語彙の定義元（ほぼ常に "https://schema.org"）</li>
+                    <li><span class="highlight">@type</span> - データの種類（Product, Article, Personなど）</li>
+                    <li>その他のフィールドは@typeによって変わる</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Interactive Examples -->
+        <div class="section">
+            <h2>💻 実践例</h2>
+
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('product')">🛍️ 商品</button>
+                <button class="tab" onclick="showTab('article')">📝 記事</button>
+                <button class="tab" onclick="showTab('restaurant')">🍽️ レストラン</button>
+                <button class="tab" onclick="showTab('event')">🎫 イベント</button>
+                <button class="tab" onclick="showTab('person')">👤 人物</button>
+            </div>
+
+            <!-- Product Tab -->
+            <div id="product" class="tab-content active">
+                <h3>商品ページの例</h3>
+                <div class="visual-demo">
+                    <div class="demo-card">
+                        <h4>検索結果での見え方</h4>
+                        <div style="margin: 15px 0;">
+                            <div style="color: #1a0dab; font-size: 20px; margin-bottom: 5px;">
+                                ワイヤレスヘッドホン WH-1000XM5
+                            </div>
+                            <div class="stars">★★★★★</div>
+                            <div style="color: #5f6368; margin: 10px 0;">
+                                評価: 4.8 (127件のレビュー)
+                            </div>
+                            <div class="price">¥45,000</div>
+                            <div style="margin-top: 10px;">
+                                <span class="badge">在庫あり</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="code-block">
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Product"</span>,
+  <span class="key">"name"</span>: <span class="string">"ワイヤレスヘッドホン"</span>,
+  <span class="key">"image"</span>: <span class="string">"https://..."</span>,
+  <span class="key">"description"</span>: <span class="string">"高音質..."</span>,
+  <span class="key">"brand"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Brand"</span>,
+    <span class="key">"name"</span>: <span class="string">"Sony"</span>
+  },
+  <span class="key">"offers"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Offer"</span>,
+    <span class="key">"price"</span>: <span class="string">"45000"</span>,
+    <span class="key">"priceCurrency"</span>: <span class="string">"JPY"</span>,
+    <span class="key">"availability"</span>: <span class="string">"InStock"</span>
+  },
+  <span class="key">"aggregateRating"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"AggregateRating"</span>,
+    <span class="key">"ratingValue"</span>: <span class="string">"4.8"</span>,
+    <span class="key">"reviewCount"</span>: <span class="string">"127"</span>
+  }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article Tab -->
+            <div id="article" class="tab-content">
+                <h3>ブログ記事の例</h3>
+                <div class="code-block">
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Article"</span>,
+  <span class="key">"headline"</span>: <span class="string">"JSON-LDの完全ガイド"</span>,
+  <span class="key">"image"</span>: <span class="string">"https://example.com/image.jpg"</span>,
+  <span class="key">"datePublished"</span>: <span class="string">"2024-10-30"</span>,
+  <span class="key">"dateModified"</span>: <span class="string">"2024-10-30"</span>,
+  <span class="key">"author"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Person"</span>,
+    <span class="key">"name"</span>: <span class="string">"山田太郎"</span>,
+    <span class="key">"url"</span>: <span class="string">"https://example.com/author"</span>
+  },
+  <span class="key">"publisher"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Organization"</span>,
+    <span class="key">"name"</span>: <span class="string">"Tech Blog"</span>,
+    <span class="key">"logo"</span>: {
+      <span class="key">"@type"</span>: <span class="string">"ImageObject"</span>,
+      <span class="key">"url"</span>: <span class="string">"https://example.com/logo.png"</span>
+    }
+  },
+  <span class="key">"description"</span>: <span class="string">"構造化データの基礎から応用まで"</span>
+}
+                </div>
+                <div class="info-box">
+                    <h4>記事で使う主なプロパティ：</h4>
+                    <ul>
+                        <li><strong>headline</strong> - 記事タイトル（110文字以内推奨）</li>
+                        <li><strong>datePublished</strong> - 公開日</li>
+                        <li><strong>author</strong> - 著者情報</li>
+                        <li><strong>publisher</strong> - 出版者（必須）</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Restaurant Tab -->
+            <div id="restaurant" class="tab-content">
+                <h3>レストラン情報の例</h3>
+                <div class="code-block">
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Restaurant"</span>,
+  <span class="key">"name"</span>: <span class="string">"寿司処 まつもと"</span>,
+  <span class="key">"image"</span>: <span class="string">"https://example.com/restaurant.jpg"</span>,
+  <span class="key">"address"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"PostalAddress"</span>,
+    <span class="key">"streetAddress"</span>: <span class="string">"東京都渋谷区1-2-3"</span>,
+    <span class="key">"addressLocality"</span>: <span class="string">"渋谷区"</span>,
+    <span class="key">"addressRegion"</span>: <span class="string">"東京都"</span>,
+    <span class="key">"postalCode"</span>: <span class="string">"150-0001"</span>,
+    <span class="key">"addressCountry"</span>: <span class="string">"JP"</span>
+  },
+  <span class="key">"telephone"</span>: <span class="string">"+81-3-1234-5678"</span>,
+  <span class="key">"servesCuisine"</span>: <span class="string">"Japanese"</span>,
+  <span class="key">"priceRange"</span>: <span class="string">"¥¥¥"</span>,
+  <span class="key">"aggregateRating"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"AggregateRating"</span>,
+    <span class="key">"ratingValue"</span>: <span class="string">"4.5"</span>,
+    <span class="key">"reviewCount"</span>: <span class="string">"89"</span>
+  },
+  <span class="key">"openingHours"</span>: [
+    <span class="string">"Mo-Fr 11:30-14:00"</span>,
+    <span class="string">"Mo-Fr 17:00-22:00"</span>,
+    <span class="string">"Sa-Su 11:30-22:00"</span>
+  ]
+}
+                </div>
+            </div>
+
+            <!-- Event Tab -->
+            <div id="event" class="tab-content">
+                <h3>イベント情報の例</h3>
+                <div class="code-block">
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Event"</span>,
+  <span class="key">"name"</span>: <span class="string">"Web技術カンファレンス 2024"</span>,
+  <span class="key">"startDate"</span>: <span class="string">"2024-12-15T09:00"</span>,
+  <span class="key">"endDate"</span>: <span class="string">"2024-12-15T18:00"</span>,
+  <span class="key">"eventAttendanceMode"</span>: <span class="string">"OfflineEventAttendanceMode"</span>,
+  <span class="key">"eventStatus"</span>: <span class="string">"EventScheduled"</span>,
+  <span class="key">"location"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Place"</span>,
+    <span class="key">"name"</span>: <span class="string">"東京国際フォーラム"</span>,
+    <span class="key">"address"</span>: {
+      <span class="key">"@type"</span>: <span class="string">"PostalAddress"</span>,
+      <span class="key">"streetAddress"</span>: <span class="string">"千代田区丸の内3-5-1"</span>,
+      <span class="key">"addressLocality"</span>: <span class="string">"千代田区"</span>,
+      <span class="key">"postalCode"</span>: <span class="string">"100-0005"</span>,
+      <span class="key">"addressCountry"</span>: <span class="string">"JP"</span>
+    }
+  },
+  <span class="key">"offers"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Offer"</span>,
+    <span class="key">"url"</span>: <span class="string">"https://example.com/tickets"</span>,
+    <span class="key">"price"</span>: <span class="string">"5000"</span>,
+    <span class="key">"priceCurrency"</span>: <span class="string">"JPY"</span>,
+    <span class="key">"availability"</span>: <span class="string">"InStock"</span>,
+    <span class="key">"validFrom"</span>: <span class="string">"2024-10-01"</span>
+  },
+  <span class="key">"organizer"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Organization"</span>,
+    <span class="key">"name"</span>: <span class="string">"Web Tech Org"</span>,
+    <span class="key">"url"</span>: <span class="string">"https://example.com"</span>
+  }
+}
+                </div>
+            </div>
+
+            <!-- Person Tab -->
+            <div id="person" class="tab-content">
+                <h3>人物情報の例</h3>
+                <div class="code-block">
+{
+  <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+  <span class="key">"@type"</span>: <span class="string">"Person"</span>,
+  <span class="key">"name"</span>: <span class="string">"山田太郎"</span>,
+  <span class="key">"jobTitle"</span>: <span class="string">"ソフトウェアエンジニア"</span>,
+  <span class="key">"image"</span>: <span class="string">"https://example.com/profile.jpg"</span>,
+  <span class="key">"url"</span>: <span class="string">"https://yamada-taro.example.com"</span>,
+  <span class="key">"sameAs"</span>: [
+    <span class="string">"https://twitter.com/yamada_taro"</span>,
+    <span class="string">"https://github.com/yamada-taro"</span>,
+    <span class="string">"https://www.linkedin.com/in/yamada-taro"</span>
+  ],
+  <span class="key">"worksFor"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Organization"</span>,
+    <span class="key">"name"</span>: <span class="string">"Tech Company Inc."</span>
+  },
+  <span class="key">"alumniOf"</span>: {
+    <span class="key">"@type"</span>: <span class="string">"Organization"</span>,
+    <span class="key">"name"</span>: <span class="string">"東京大学"</span>
+  },
+  <span class="key">"knowsAbout"</span>: [
+    <span class="string">"JavaScript"</span>,
+    <span class="string">"Python"</span>,
+    <span class="string">"Web開発"</span>
+  ]
+}
+                </div>
+            </div>
+        </div>
+
+        <!-- How to Use -->
+        <div class="section">
+            <h2>🛠️ 実装方法</h2>
+
+            <h3>1. HTMLに直接記述</h3>
+            <div class="code-block">
+<span class="key">&lt;!DOCTYPE html&gt;</span>
+<span class="key">&lt;html&gt;</span>
+<span class="key">&lt;head&gt;</span>
+  <span class="key">&lt;script</span> <span class="string">type="application/ld+json"</span><span class="key">&gt;</span>
+  {
+    <span class="key">"@context"</span>: <span class="string">"https://schema.org"</span>,
+    <span class="key">"@type"</span>: <span class="string">"WebPage"</span>,
+    <span class="key">"name"</span>: <span class="string">"ページタイトル"</span>
+  }
+  <span class="key">&lt;/script&gt;</span>
+<span class="key">&lt;/head&gt;</span>
+            </div>
+
+            <h3>2. Nuxt 3 で useHead を使う</h3>
+            <div class="code-block">
+<span class="key">useHead</span>({
+  <span class="key">script</span>: [
+    {
+      <span class="key">type</span>: <span class="string">'application/ld+json'</span>,
+      <span class="key">innerHTML</span>: <span class="key">JSON.stringify</span>({
+        <span class="string">'@context'</span>: <span class="string">'https://schema.org'</span>,
+        <span class="string">'@type'</span>: <span class="string">'Product'</span>,
+        <span class="string">'name'</span>: <span class="string">'商品名'</span>
+      })
+    }
+  ]
+})
+            </div>
+
+            <h3>3. Next.js で実装</h3>
+            <div class="code-block">
+<span class="key">export default function</span> <span class="key">Page</span>() {
+  <span class="key">const</span> jsonLd = {
+    <span class="string">'@context'</span>: <span class="string">'https://schema.org'</span>,
+    <span class="string">'@type'</span>: <span class="string">'Product'</span>,
+    <span class="string">'name'</span>: <span class="string">'商品名'</span>
+  };
+
+  <span class="key">return</span> (
+    &lt;&gt;
+      &lt;<span class="key">script</span>
+        <span class="key">type</span>=<span class="string">"application/ld+json"</span>
+        <span class="key">dangerouslySetInnerHTML</span>={{ <span class="key">__html</span>: <span class="key">JSON.stringify</span>(jsonLd) }}
+      /&gt;
+    &lt;/&gt;
+  );
+}
+            </div>
+        </div>
+
+        <!-- Testing Tools -->
+        <div class="section">
+            <h2>🧪 テストツール</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Google リッチリザルトテスト</h4>
+                    <p>Googleでの表示を確認</p>
+                    <div style="margin-top: 10px; color: #fff;">
+                        <a href="https://search.google.com/test/rich-results" target="_blank" style="color: white; text-decoration: underline;">
+                            テストする →
+                        </a>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <h4>Schema Markup Validator</h4>
+                    <p>Schema.orgの公式検証ツール</p>
+                    <div style="margin-top: 10px;">
+                        <a href="https://validator.schema.org/" target="_blank" style="color: white; text-decoration: underline;">
+                            検証する →
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>テスト方法：</h4>
+                <ol>
+                    <li>ページのURLまたはコードを入力</li>
+                    <li>「テスト」ボタンをクリック</li>
+                    <li>エラーや警告を確認</li>
+                    <li>プレビューで表示を確認</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Best Practices -->
+        <div class="section">
+            <h2>✨ ベストプラクティス</h2>
+
+            <h3>✅ DO（推奨）</h3>
+            <ul>
+                <li>必須フィールドは必ず含める</li>
+                <li>正確な情報を記述する（虚偽情報はペナルティ対象）</li>
+                <li>画像は高解像度（最低 1200px推奨）</li>
+                <li>日付はISO 8601形式（2024-10-30）</li>
+                <li>複数のタイプを使う場合は配列で</li>
+                <li>定期的にテストツールで検証</li>
+            </ul>
+
+            <h3>❌ DON'T（非推奨）</h3>
+            <ul>
+                <li>ページ内容と異なる情報を記述</li>
+                <li>過度に多くのタイプを設定</li>
+                <li>レビューの捏造</li>
+                <li>スパム的なキーワードの羅列</li>
+                <li>未公開コンテンツの情報を含める</li>
+            </ul>
+        </div>
+
+        <!-- Common Schema Types -->
+        <div class="section">
+            <h2>📋 よく使うSchema.orgタイプ</h2>
+            <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>商品・サービス</strong><br>
+                    Product, Offer, Review
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>コンテンツ</strong><br>
+                    Article, BlogPosting, NewsArticle
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>ビジネス</strong><br>
+                    LocalBusiness, Restaurant, Organization
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>イベント</strong><br>
+                    Event, Course, WebinarEvent
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>人物・チーム</strong><br>
+                    Person, Organization
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>レシピ・料理</strong><br>
+                    Recipe, HowTo
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>動画・音楽</strong><br>
+                    VideoObject, MusicRecording
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <strong>FAQ・Q&A</strong><br>
+                    FAQPage, QAPage
+                </div>
+            </div>
+        </div>
+
+        <!-- Benefits -->
+        <div class="section">
+            <h2>🎁 導入するメリット</h2>
+            <div class="example-output">
+                <h4>具体的な効果：</h4>
+                <ul>
+                    <li><strong>CTR向上</strong> - 星評価表示で平均30%クリック率アップ</li>
+                    <li><strong>SEO改善</strong> - Googleが内容を正確に理解</li>
+                    <li><strong>音声検索対応</strong> - スマートスピーカーで読み上げられる</li>
+                    <li><strong>ブランド認知</strong> - ナレッジグラフに表示される可能性</li>
+                    <li><strong>信頼性向上</strong> - 正確な情報提供で信頼獲得</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <p>📖 もっと詳しく知りたい方は <a href="https://schema.org" target="_blank" style="color: white;">Schema.org</a> をチェック！</p>
+            <p style="margin-top: 10px; opacity: 0.8;">Created with ❤️ for learning structured data</p>
+        </footer>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
